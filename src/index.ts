@@ -16,11 +16,80 @@ app.use(express.urlencoded({ limit: 200000, extended: true }))
 app.use(cors())
 
 //Logging
-app.all('*', (req, res) => {
-    logger.info(req.method + ": " + req.originalUrl)
-    res.status(200).send(req.method + ":" + req.originalUrl)
+app.all('*', (req, res, next) => {
+    logger.info(req.method + ": " + req.originalUrl + "|" + req.ip)
+    next()
 })
 
+//MainSystem
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'Success',
+        details: 'Server is working'
+    })
+})
+
+app.post('/login', (req, res) => {
+    res.status(500).json({
+        status: 'error',
+        details: 'No coding'
+    })
+})
+
+app.get('/check', (req, res) => {
+    res.status(500).json({
+        status: 'error',
+        details: 'No coding'
+    })
+})
+
+app.post('/refresh', (req, res) => {
+    res.status(500).json({
+        status: 'error',
+        details: 'No coding'
+    })
+})
+
+app.get('/publickey', (req, res) => {
+    res.status(500).json({
+        status: 'error',
+        details: 'No coding'
+    })
+})
+
+//Account
+//create
+app.post('/account', (req, res) => {
+    res.status(500).json({
+        status: 'error',
+        details: 'No coding'
+    })
+})
+
+//delete
+app.delete('/account', (req, res) => {
+    res.status(500).json({
+        status: 'error',
+        details: 'No coding'
+    })
+})
+
+//edit
+app.put('/account', (req, res) => {
+    res.status(500).json({
+        status: 'error',
+        details: 'No coding'
+    })
+})
+
+//404Error
+app.all('*', (req, res) => {
+    res.status(404).json({
+        status: 'Error',
+        details: 'Not Found',
+        path: req.method + ":" + req.originalUrl
+    })
+})
 
 //Start app
 app.listen(PORT, () => {
