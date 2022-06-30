@@ -1,4 +1,6 @@
 //Import
+import { logger } from './logger'
+
 import { Express } from 'express'
 
 const express = require('express')
@@ -15,13 +17,16 @@ app.use(cors())
 
 //Logging
 app.all('*', (req, res) => {
-    console.log(req.originalUrl)
-    res.status(200).send("[" + req.method + "] " + req.originalUrl)
+    logger.info(req.method + ": " + req.originalUrl)
+    res.status(200).send(req.method + ":" + req.originalUrl)
 })
 
 
 //Start app
 app.listen(PORT, () => {
-    console.log("Server Started!")
-    console.log("Listening Port: " + PORT)
+    logger.info("#########################")
+    logger.info("SUS-DX Auth System")
+    logger.info("Server Start!")
+    logger.info("Listening Port: " + PORT)
+    logger.info("#########################")
 })
