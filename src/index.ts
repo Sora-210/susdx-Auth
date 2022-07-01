@@ -3,6 +3,7 @@ import { logger } from './logger'
 
 import { join } from 'path'
 import { readFile } from 'fs'
+import { sign, Secret, SignOptions, verify, JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken'
 
 import { Express } from 'express'
 
@@ -15,7 +16,7 @@ const PUBLICKKEYPATH = process.env.PUBLICKEYPATH || join(__dirname, '..', 'keys'
 const PRIVATEKEYPATH = process.env.PUBLICKEYPATH || join(__dirname, '..', 'keys', 'privateKey.pem')
 
 //Read publicKey
-let PUBLIC_KEY:String
+let PUBLIC_KEY:Secret
 readFile(PUBLICKKEYPATH, (e, data) => {
     if (e) {
         logger.error('PublicKeyError:')
@@ -27,7 +28,7 @@ readFile(PUBLICKKEYPATH, (e, data) => {
 })
 
 //Read privateKey
-let PRIVATE_KEY:String
+let PRIVATE_KEY:Secret
 readFile(PRIVATEKEYPATH, (e, data) => {
     if (e) {
         logger.error('PrivateKeyError:')
@@ -59,17 +60,80 @@ app.get('/health', (req, res) => {
 })
 
 app.post('/login', (req, res) => {
-    res.status(500).json({
-        status: 'error',
-        details: 'No coding'
-    })
+    //Check Require Params
+    if (!req.body.accountId || !req.body.password) {
+        res.status(400).json({
+            status: 'error',
+            details: "Did can't get require params"
+        })
+        return
+    }
+
+    //Check Params
+    //Demo Contents
+    if (req.body.accountId === 'sus' &&
+        req.body.password === 'suwarika')
+    {
+        //Create Token
+        const body = {
+            accountId: req.body.accountId
+        }
+        const options: SignOptions = {
+            algorithm: 'RS512',
+            expiresIn: '15m'
+        }
+        const token = sign(body, PRIVATE_KEY, options)
+
+        res.status(201).json({
+            status: 'success',
+            details: 'Success to login and create token',
+            data: {
+                token: token
+            }
+        })
+    } else {
+        res.status(400).json({
+            status: 'error',
+            details: "Either params content didn't match"
+        })
+    }
 })
 
 app.get('/check', (req, res) => {
-    res.status(500).json({
-        status: 'error',
-        details: 'No coding'
-    })
+    if (!req.headers['authorization']?.split(" ")[1]) {
+        res.status(400).json({
+
+        })
+        return
+    }
+    const token = req.headers['authorization'].split(" ")[1]
+    
+    //Check Key
+    try {
+        const decodeBody = verify(token , PUBLIC_KEY, { algorithms: ['RS512'] })
+        res.status(200).json(decodeBody)
+    } catch(e) {
+        if (e instanceof TokenExpiredError) {
+            logger.debug("Expried Error")
+            res.status(403).json({
+                status: "warn",
+                details: "Token is expried"
+            })
+        } else if (e instanceof JsonWebTokenError) {
+            logger.debug("Invalid Error")
+            res.status(403).json({
+                status: "warn",
+                details: "Token is invalid"
+            })
+        } else {
+            logger.error("Unknown error occurred!")
+            logger.error(e)
+            res.status(500).json({
+                status: 'error',
+                details: 'Unknown error occurred'
+            })
+        }
+    }
 })
 
 app.post('/refresh', (req, res) => {
